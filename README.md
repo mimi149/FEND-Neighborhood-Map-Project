@@ -12,9 +12,10 @@ You can open map/index.html in your local server to see the app.
 - Clicking a location on the list displays unique information about the location, and animates its associated map marker.
 - Map displays all location markers by default, and displays the filtered subset of location markers when a filter is applied.
 - Clicking a marker displays unique information about a location in an infoWindow.
-- Markers animate when clicked (color change.)
+- Markers change color when clicked.
+
 #### App Architecture
 - Use Knockout: Code is separated based upon Knockout best practices (follow an MVVM pattern, avoid updating the DOM manually with jQuery or JS, use observables rather than forcing refreshes manually, etc). 
 - Application utilizes the Google Maps API and one non-Google third-party API.
-Functionality providing additional data about a location is provided and sourced from a 3rd party API: Foursquare.
+- Functionality providing additional data about a location is provided and sourced from a 3rd party API: Foursquare.
 - All data requests are retrieved in an asynchronous manner.
