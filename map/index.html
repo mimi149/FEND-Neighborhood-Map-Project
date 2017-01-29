@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8"> <!-- use utf-8 for display -->
+    <meta http-equiv="X-UA-Comatible" content="IE=edge"> <!-- make IE use best engine -->
+    <meta name="viewport" content="width=device-width, initial-scale=1"> <!-- for mobile view -->
+    <title>Mimi Neighborhood</title>
+    <link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet' type='text/css'>
+    <link href="css/style.css" rel="stylesheet" type="text/css">
+    <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?libraries=places"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/knockout-3.2.0.js"></script>
+    <script type="text/javascript" src="js/mymap.js"></script>
+  </head>
+
+  <body>
+    <div id="map"></div>
+
+    <div class="settings">
+      <div data-bind="visible: settingFlag" class="settings-container">
+        <div class="settings-box">
+          <h4 class="settings-title">Enter your desired place:</h4>
+          <input data-bind="value: location" class="settings-area">
+        </div>
+        <div class="pointy"></div>
+      </div>
+      <button data-bind="click: settingToggle" class="settings-icon"></button>
+    </div>
+
+    <div class="search-bar">
+      <input data-bind="value: keyword" class="search-area" placeholder="search for popular places">
+      <button class="search-button"></button>
+    </div>
+
+    <div id="infolistBox">
+      <div class="list-title">
+        <h2>Popular Places</h2>
+	  <img src="images/ic_keyboard_arrow_up_grey600_24dp.png" data-bind="click: listToggle, visible: infoListFlag">
+	  <img src="images/ic_keyboard_arrow_down_grey600_24dp.png" data-bind="click: listToggle, visible: notInfoListFlag">
+      </div>
+      <div data-bind="visible: infoListFlag">
+        <ul class="infolist" data-bind="foreach: filteredPlaces">
+        <li data-bind="click: $root.markerClick">
+            <hr>
+            <p><span class="v-name" data-bind="text: venue.name"></span></p>
+            <p class="v-category"><span data-bind="text: venue.categories[0].name"></span></p>
+            <p class="v-address"><span data-bind="text: venue.location.formattedAddress"></span></p>
+            <p class="v-contact"><span data-bind="text: venue.contact.formattedPhone"></span></p>
+            <p>
+              <strong>Tips: </strong>
+              <span data-bind="if: $data.tips">
+                <span data-bind="text: tips[0].text"></span>
+              </span>
+              <span data-bind="ifnot: $data.tips">
+                <em>no tips available.</em>
+              </span>
+            </p>
+        </li>
+        </ul>
+        <span class="no-result" data-bind="visible: !filteredPlaces().length">No Result Found</span>
+      </div>
+    </div>
+
+  </body>
+</html>
