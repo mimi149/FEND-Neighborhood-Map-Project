@@ -1,18 +1,25 @@
-var NeighborMarker = function (marker, name, category) {
+function MyApp(){
+	this.map='';
+	this.service='';
+	this.infoWindow='';
+}
+
+myApp = new MyApp();
+
+function NeighborMarker (marker, name, category) {
 	this.marker = marker,
 	this.name = name,
 	this.category = category
 };
 
-function viewModel() {
+function ViewModel() {
+	var MARKER_DEFAULT_COLOR = 'F37268';
+	var MARKER_ACTIVE_COLOR = 'FFFF24';
+
 	var self = this;
-	var map;
-	var service;
 	var mapBounds;
 	var defaultLocation = "Fountain Valley";
 	var locationMarker;
-	var neighborMarkers = []; // neighborMarkers for neighborhood (popularPlaces or filteredPlaces)
-	var infoWindow;
 
 	self.location = ko.observable(defaultLocation);
 	self.popularPlaces = ko.observableArray([]);
@@ -22,51 +29,134 @@ function viewModel() {
 	self.notInfoListFlag = ko.observable(false); // boolean flag for up/down arrow for info list
 	self.settingFlag = ko.observable(true); // boolean flag for setting toggle
 
+	// Observable Array for drop down list of categories
+	self.categories = ko.observableArray([]);
+
+	// Hold the selected value from drop down list of categories
+	self.selectedCategory = ko.observable('');
+
+	// Hold the categories of the places in the filteredPlaces
+	self.filteredCategories = ko.observableArray([]);
+
 	// Set the map height to the window size
 	self.mapSize = ko.computed(function () {
 		$("#map").height($(window).height());
 	});
 
-	// initialize the map
-	initMap();
-
-	// Update the info list based on the searching keyword
-	self.infoListUpdate = ko.computed(function () {
-		var list = [];
-		var keyword = self.keyword().toLowerCase();
-		self.popularPlaces().forEach(function (item) {
-			if (item.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
-				item.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1) {
-				list.push(item);
-			}
+	self.updateFilteredCategories = ko.computed(function () {
+		var categoryList = [], category;
+		self.filteredPlaces().forEach(function (place) {
+			category = place.venue.categories[0].name;
+			categoryList.push(category);
 		});
-		self.filteredPlaces(list);
+		var categorySet = new Set(categoryList);
+		self.filteredCategories(Array.from(categorySet));
+	});
+
+	// Update the info list and the markers based on the selected category
+	self.updateFromSelectedCategory = ko.computed(function () {
+
+		var filterList;
+		// if (keyword)
+		// 	return;
+		if (!self.selectedCategory()) {
+			console.log("not filter not filter not filter not filter not filter");
+			// No input found, return all places
+			filterList = self.popularPlaces();
+			console.log(filterList);
+			filterList.forEach(function(place) {
+				// Display marker for this place
+				if (place.marker)
+					place.marker.setVisible(true);
+			});
+
+		} else {
+			// Clear the search bar
+			self.keyword("");
+
+			// input found, match type to filter, update the info list
+			filterList = ko.utils.arrayFilter(self.popularPlaces(), function(place) {
+
+				if (place.venue.categories[0].name === self.selectedCategory()) {
+					// Display marker for this place
+					if (place.marker)
+						place.marker.setVisible(true);
+					return true;
+				}
+				else {
+					// Hide marker for this place
+					if (place.marker)
+						place.marker.setVisible(false);
+					return false;
+				}
+			});
+		}
+		self.filteredPlaces(filterList);
+		myApp.infoWindow.close();
+		if (locationMarker && locationMarker.position)
+			myApp.map.panTo(locationMarker.position);
+	});
+
+	// Update the info list and the markers based on the searching keyword
+	self.updateFromSearchingKeyword = ko.computed(function () {
+		var placeList = [], categoryList = [];
+		var keyword = self.keyword().toLowerCase();
+		if (keyword) {
+
+				self.popularPlaces().forEach(function (place) {
+
+				if (place.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
+					place.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1) {
+					placeList.push(place);
+					categoryList.push(place.venue.categories[0].name);
+					// Display marker for this place
+					if (place.marker)
+						place.marker.setVisible(true);
+				}
+				else {
+					// Hide marker for this place
+					if (place.marker)
+						place.marker.setVisible(false);
+				}
+			});
+			self.filteredPlaces(placeList);
+			// self.filteredCategories(Array.from(new Set(categoryList)));
+			console.log("self.filteredCategories().length: ", self.filteredCategories().length, self.filteredCategories());
+			// Close the current infoWindow
+			myApp.infoWindow.close();
+
+			// Move the desired location to the center of the map
+			if (locationMarker && locationMarker.position)
+				myApp.map.panTo(locationMarker.position);
+		}
 	});
 
 	// Update the neighborMarkers based on the searching keyword
-	self.markersUpdate = ko.computed(function () {
-		var keyword = self.keyword().toLowerCase();
-		neighborMarkers.forEach(function (item) {
-			if (item.marker.map === null) {
-				item.marker.setMap(map);
-			}
-			if (item.name.toLowerCase().indexOf(keyword) === -1 && item.category.toLowerCase().indexOf(keyword) === -1) {
-				item.marker.setMap(null);
-			}
-		});
-	});
+	// self.markersUpdate = ko.computed(function () {
+	// 	var keyword = self.keyword().toLowerCase();
+	// 	neighborMarkers.forEach(function (place) {
+	// 		if (place.marker.map === null) {
+	// 			place.marker.setMap(myApp.map);
+	// 		}
+	// 		if (place.name.toLowerCase().indexOf(keyword) === -1 && place.category.toLowerCase().indexOf(keyword) === -1) {
+	// 			place.marker.setMap(null);
+	// 		}
+	// 	});
+	// });
 
 	// Use Google Maps PlacesService to get information for the desired location
 	self.neighborUpdate = ko.computed(function () {
+    if (typeof google === 'undefined')
+      return;
+
 		if (self.location()) {
 			if (locationMarker) {
 				locationMarker.setMap(null);
 				locationMarker = null;
 			}
-			markersRemove();
+
 			var request = {query: self.location()};
-			service = new google.maps.places.PlacesService(map);
-			service.textSearch(request, function neighborhoodCallback(results, status) {
+			myApp.service.textSearch(request, function neighborhoodCallback(results, status) {
 				if (status == google.maps.places.PlacesServiceStatus.OK) {
 					locationProcess(results[0]);
 					neighborProcess(results[0]);
@@ -78,18 +168,9 @@ function viewModel() {
 
 	// Make sure the map bounds get updated on page resize
 	window.addEventListener('resize', function (e) {
-		map.fitBounds(mapBounds);
+		myApp.map.fitBounds(mapBounds);
 		$("#map").height($(window).height());
 	});
-
-	function initMap() {
-		var mapOptions = {
-			zoom: 14,
-			disableDefaultUI: true
-		};
-		map = new google.maps.Map(document.querySelector('#map'), mapOptions);
-		infoWindow = new google.maps.InfoWindow();
-	}
 
 	// Toggle the info list
 	self.listToggle = function () {
@@ -102,39 +183,48 @@ function viewModel() {
 		self.settingFlag(!self.settingFlag());
 	};
 
-	// Trigger click event to neighborMarkers when info list item is clicked
+	// Trigger click event to the marker when info list item is clicked
 	self.markerClick = function (venue) {
+		// Clear the searching keyword
+		self.keyword("");
+
 		var venueName = venue.venue.name.toLowerCase();
-		neighborMarkers.forEach(function (item) {
-			if (item.name.toLowerCase() === venueName) {
-				google.maps.event.trigger(item.marker, 'click');
-				map.panTo(item.marker.position);
+
+		self.popularPlaces().forEach(function (place) {
+			var marker = place.marker;
+
+			if (marker.title.toLowerCase() === venueName) {
+				google.maps.event.trigger(marker, 'click');
+				marker.setIcon(makeMarkerIcon(MARKER_ACTIVE_COLOR));
+				myApp.map.panTo(marker.position);
 			}
+
+			else // Deactivate all the rest of markers
+				marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
 		});
 	};
 
-	// Get popular places around the desired location and set the neighborMarkers
 	function locationProcess(location) {
 		var lat = location.geometry.location.lat();
 		var lng = location.geometry.location.lng();
-		map.setCenter(new google.maps.LatLng(lat, lng));
+		myApp.map.setCenter(new google.maps.LatLng(lat, lng));
 
 		locationMarker = new google.maps.Marker({
-			map: map,
+			map: myApp.map,
 			position: location.geometry.location,
 			title: location.name,
 			icon: "images/ic_grade_black_18dp.png"
 		});
+
 		// Show infoWindow to the desired location
 		google.maps.event.addListener(locationMarker, 'click', function () {
-			infoWindow.setContent(location.name);
-			infoWindow.open(map, locationMarker);
+			myApp.infoWindow.setContent(location.name);
+			myApp.infoWindow.open(myApp.map, locationMarker);
 		});
 	}
 
+	// Use Foursquare API to get the popular places around the desired location
 	function neighborProcess(location) {
-		// Use Foursquare API to get the popular places around the desired location
-		// Set the neighborMarkers and zoom the map to show all the neighborMarkers
 		var lat = location.geometry.location.lat();
 		var lng = location.geometry.location.lng();
 		baseUri = "https://api.foursquare.com/v2/venues/explore?ll=";
@@ -144,10 +234,18 @@ function viewModel() {
 		$.getJSON(foursquareQueryUri, function (data) {
 			if (data) {
 				self.popularPlaces(data.response.groups[0].items);
-				self.popularPlaces().forEach(function (item) {
-					item.activeFlag = false;
-					markerCreate(item.venue);
+
+				var categoryList = [];
+				self.popularPlaces().forEach(function (place) {
+					// Add marker to place
+					place.marker = markerCreate(place.venue);
+
+					var category = place.venue.categories[0].name;
+					// dynamically retrieve categories to create dropdown list later
+					categoryList.push(category);
 				});
+				var categorySet = new Set(categoryList);
+				self.categories(Array.from(categorySet));
 
 				// Change the map zoom level based on suggested bounds
 				var bounds = data.response.suggestedBounds;
@@ -155,7 +253,7 @@ function viewModel() {
 					mapBounds = new google.maps.LatLngBounds(
 						new google.maps.LatLng(bounds.sw.lat, bounds.sw.lng),
 						new google.maps.LatLng(bounds.ne.lat, bounds.ne.lng));
-					map.fitBounds(mapBounds);
+					myApp.map.fitBounds(mapBounds);
 				}
 			}
 		});
@@ -169,49 +267,56 @@ function viewModel() {
 		var lat = venue.location.lat;
 		var lng = venue.location.lng;
 		var position = new google.maps.LatLng(lat, lng);
-		var name = venue.name;
-		var category = venue.categories !== [] ? venue.categories[0].name : '';
+		// var name = venue.name;
+		// var category = venue.categories !== []? venue.categories[0].name: '';
 
 		// Use Google Maps Marker API to get marker
 		var marker = new google.maps.Marker({
-			map: map,
+			map: myApp.map,
 			position: position,
-			title: name
+			title: venue.name
 		});
 
-		neighborMarkers.push(new NeighborMarker(marker, name.toLowerCase(), category.toLowerCase()));
-		map.panTo(position);
+		// Add one more property to marker: infoWindow contains the content to be displayed when this marker is clicked.
+		marker.infoWindow = getInfoWindow(venue);
 
-		// Create an onclick event to open an infoWindow for each marker.
-		marker.addListener('click', function () {
-			populateInfoWindow(this, venue);
-			map.panTo(this.position);
+		marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
 
+		marker.addListener('mouseup', function () {
+			this.setIcon(makeMarkerIcon(MARKER_ACTIVE_COLOR));
 		});
 
 		// Two event listeners - one for mouseover, one for mouseout, to change the colors back and forth.
 		marker.addListener('mouseover', function () {
-			this.setIcon(makeMarkerIcon('FFFF24'));
+			this.setIcon(makeMarkerIcon(MARKER_ACTIVE_COLOR));
 		});
 		marker.addListener('mouseout', function () {
-			this.setIcon(makeMarkerIcon('F37268'));
+			this.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
 		});
+
+		// Create an onclick event to open an infoWindow for each marker.
+		marker.addListener('click', function () {
+			var markerTitle = this.title;
+
+			// Deactivate other markers
+			self.popularPlaces().forEach(function (place) {
+				var otherMarker = place.marker;
+				if (otherMarker.title !== markerTitle)
+					otherMarker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
+			});
+
+			// Populate InfoWindow for this marker. We'll only allow one infoWindow which will open at the marker
+			// that is clicked, and populate based on that markers position.
+			myApp.infoWindow.setContent(this.infoWindow);
+			myApp.infoWindow.open(myApp.map, this);
+
+			myApp.map.panTo(this.position);
+		});
+
+		return marker;
 	}
 
-	// Remove neighborhood neighborMarkers from the map
-	// This method is called when neighborhood is newly defined
-	function markersRemove() {
-		neighborMarkers.forEach(function (item) {
-			item.marker.setMap(null);
-			item.marker = null;
-		});
-		neighborMarkers = [];
-	}
-
-	// This function populates the infoWindow when the marker is clicked. We'll only allow
-	// one infoWindow which will open at the marker that is clicked, and populate based
-	// on that markers position.
-	function populateInfoWindow(marker, venue) {
+	function getInfoWindow(venue) {
 		var name = venue.name;
 		var category = venue.categories !== [] ? venue.categories[0].name : '';
 		var address = venue.location.formattedAddress;
@@ -219,28 +324,23 @@ function viewModel() {
 		var foursquareUrl = "https://foursquare.com/v/" + venue.id;
 		var rating = venue.rating;
 		var ratingImg = getRatingImg(rating);
-		// Check to make sure the infoWindow is not already opened on this marker.
-		if (infoWindow.marker !== marker) {
-			infoWindow.marker = marker;
-			var content = '<div class="infowindow"><p><span class="v-name">' + name +
-				'</span></p><p class="v-category"><span>' + category +
-				'</span></p><p class="v-address"><span>' + address + '</span></p>';
 
-			if (contact !== undefined) {
-				content += '<p><span class="v-contact">' + contact + '</span></p>';
-			}
+		var content = '<div class="infowindow"><p><span class="v-name">' + name +
+			'</span></p><p class="v-category"><span>' + category +
+			'</span></p><p class="v-address"><span>' + address + '</span></p>';
 
-			if (rating !== undefined) {
-				content += '<p><a href="' + foursquareUrl + '" target="_blank"><img class="fs-icon" src="images/Foursquare-icon.png"></a>' +
-					'<span class="v-rating">' + (rating/2).toFixed(1) + '</span><img src="' + ratingImg + '" class="rating-stars"></p></div>';
-			} else {
-				content += '<p><a href="' + foursquareUrl + '" target="_blank"><img class="fs-icon" src="images/Foursquare-icon.png"></a>' +
-					'<span class="v-rating"><em>no rating available</em></span></p></div>';
-			}
-
-			infoWindow.setContent(content);
-			infoWindow.open(map, marker);
+		if (contact !== undefined) {
+			content += '<p><span class="v-contact">' + contact + '</span></p>';
 		}
+
+		if (rating !== undefined) {
+			content += '<p><a href="' + foursquareUrl + '" target="_blank"><img class="fs-icon" src="images/Foursquare-icon.png"></a>' +
+				'<span class="v-rating">' + (rating / 2).toFixed(1) + '</span><img src="' + ratingImg + '" class="rating-stars"></p></div>';
+		} else {
+			content += '<p><a href="' + foursquareUrl + '" target="_blank"><img class="fs-icon" src="images/Foursquare-icon.png"></a>' +
+				'<span class="v-rating"><em>no rating available</em></span></p></div>';
+		}
+		return content;
 	}
 
 	function getRatingImg(rating) {
@@ -278,10 +378,33 @@ function viewModel() {
 			new google.maps.Size(23, 40));
 		return markerImage;
 	}
+
 }
 
-// Initialize the view model binding
-$(function () {
-	var vm = new viewModel();
-	ko.applyBindings(vm);
-});
+/**
+ * Success callback for Map API request
+ */
+function initMap() {
+	if (typeof google === 'undefined')
+		alert("Something is wrong with google API now.");
+
+	else {
+		myApp.map = new google.maps.Map(document.getElementById('map'), {
+			zoom: 15,
+			streetViewControl: false,
+			disableDefaultUI: true
+		});
+		myApp.service = new google.maps.places.PlacesService(myApp.map);
+		myApp.infoWindow = new google.maps.InfoWindow();
+
+		// Initialize the view model binding
+		ko.applyBindings(new ViewModel());
+	}
+}
+
+/**
+ * Error callback for GMap API request
+ */
+function mapError() {
+  alert("Something is wrong with google API now.");
+};

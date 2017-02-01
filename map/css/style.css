@@ -159,13 +159,10 @@ body {
 
 .list-title {
   color: #535353;
-  padding-left: 10px;
-  border-bottom: 1px solid #e6e6e6;
+  border-bottom: 1px solid #E6E6E6;
   max-width: 300px;
   width: 300px;
-  margin: 0px;
-  padding-top: 15px;
-  padding-bottom: 17px;
+  margin: 0px 5px;
   display: flex;
   cursor: pointer;
   -webkit-box-sizing: border-box;
@@ -182,8 +179,9 @@ body {
 }
 
 .list-title h2 {
-  margin: 0px;
-  margin-left: 3px;
+  width: 70%;
+  padding-left: 10px;
+  padding-right: 30px;
 }
 
 .infowindow {
@@ -275,7 +273,7 @@ p.v-contact {
 }
 
 .v-link {
-  color: #4272db;
+  color: #4272DB;
   text-decoration: none;
 }
 
@@ -303,3 +301,22 @@ p.v-contact {
   right: 110px;
   color: #9E9E9E;
 }
+
+.select {
+  width: 90%;
+  height: 30px;
+  margin: 0 5%;
+  background-color: #FAF9BB;
+}
+
+.select-result {
+  margin: 10px 30px;
+  font-style: italic;
+}
+
+.arrow {
+  width: 36px;
+  height: 36px;
+  margin: 20px 0px;
+}
+
