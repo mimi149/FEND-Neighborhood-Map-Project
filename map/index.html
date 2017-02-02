@@ -4,80 +4,91 @@
 	<meta charset="utf-8"> <!-- use utf-8 for display -->
 	<meta http-equiv="X-UA-Comatible" content="IE=edge"> <!-- make IE use best engine -->
 	<meta name="viewport" content="width=device-width, initial-scale=1"> <!-- for mobile view -->
-	<title>Mimi Neighborhood</title>
+	<title>Neighborhood Map</title>
 	<link href='https://fonts.googleapis.com/css?family=Roboto' rel='stylesheet'>
 	<link href="css/style.css" rel="stylesheet">
 </head>
 
 <body>
-<div id="map"></div>
+	<div id="map"></div>
 
-<div class="settings">
-	<div data-bind="visible: settingFlag" class="settings-container">
-		<div class="settings-box">
-			<h4 class="settings-title">Enter your desired place:</h4>
-			<input data-bind="value: location" class="settings-area">
+	<div class="settings">
+		<div data-bind="visible: settingFlag" class="settings-container">
+			<div class="settings-box">
+				<h4 class="settings-title">Enter your desired place:</h4>
+				<input data-bind="value: location" class="settings-area"  placeholder="Enter a valid place">
+			</div>
+			<div class="pointy"></div>
 		</div>
-		<div class="pointy"></div>
-	</div>
-	<button data-bind="click: settingToggle" class="settings-icon"></button>
-</div>
-
-<div class="search-bar">
-	<input data-bind="value: keyword" class="search-area" placeholder="search for popular places">
-	<button class="search-button"></button>
-</div>
-
-<div id="infolistBox">
-	<div class="list-title">
-		<h2>Popular Places</h2>
-		<img src="images/ic_keyboard_arrow_up_grey600_24dp.png" data-bind="click: listToggle, visible: infoListFlag"
-		     class="arrow">
-		<img src="images/ic_keyboard_arrow_down_grey600_24dp.png"
-		     data-bind="click: listToggle, visible: notInfoListFlag" class="arrow">
+		<button data-bind="click: settingToggle" class="settings-icon"></button>
 	</div>
 
-	<div class="select-result">
-		<span data-bind="text: filteredPlaces().length"></span>
-		<span data-bind="text: filteredPlaces().length > 1? 'items from': 'item from'"></span>
-		<span data-bind="text: selectedCategory()? '1 category': filteredCategories().length + ' categories'"></span>
-
-	</div>
-
-	<div data-bind="visible: infoListFlag">
-		<div>
-			<select data-bind="options: categories(),
-		                     optionsCaption: 'Choose category to filter',
-		                     value: selectedCategory" class="select">
-			</select>
+	<div id="infolistBox">
+		<div class="list-title">
+			<h2>Popular Places</h2>
+			<img src="images/ic_keyboard_arrow_up_grey600_24dp.png"
+			     data-bind="click: listToggle, visible: infoListFlag"
+			     class="arrow">
+			<img src="images/ic_keyboard_arrow_down_grey600_24dp.png"
+			     data-bind="click: listToggle, visible: notInfoListFlag"
+			     class="arrow">
 		</div>
 
-		<ul class="infolist" data-bind="foreach: filteredPlaces">
-			<li data-bind="click: $root.markerClick">
-				<hr>
-				<p><span class="v-name" data-bind="text: venue.name"></span></p>
-				<p class="v-category"><span data-bind="text: venue.categories[0].name"></span></p>
-				<p class="v-address"><span data-bind="text: venue.location.formattedAddress"></span></p>
-				<p class="v-contact"><span data-bind="text: venue.contact.formattedPhone"></span></p>
-				<p>
-					<strong>Tips: </strong>
-              <span data-bind="if: $data.tips">
-                <span data-bind="text: tips[0].text"></span>
-              </span>
-              <span data-bind="ifnot: $data.tips">
-                <em>no tips available.</em>
-              </span>
-				</p>
-			</li>
-		</ul>
-		<span class="no-result" data-bind="visible: !filteredPlaces().length">No Result Found</span>
-	</div>
-</div>
+		<div data-bind="visible: infoListFlag">
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-<script src="js/knockout-3.2.0.js"></script>
-<script src="js/mymap.js"></script>
-<script src="https://maps.googleapis.com/maps/api/js?libraries=places&callback=initMap"
-    async defer onerror="mapError()"></script>
+			<div class="options-box">
+				<input class="search-filter" data-bind="click: searchFilterToggle, disable: searchFlag" type="button"
+				       value="Search">
+				<input class="search-filter" data-bind="click: searchFilterToggle, disable: filterFlag" type="button"
+				       value="Filter by category">
+			</div>
+
+			<div class="select-result" data-bind="visible: placeNumber() > 0">
+				<span data-bind="text: placeNumber()"></span>
+				<span data-bind="text: placeNumber() > 1? 'items from': 'item from'"></span>
+				<span data-bind="text: categoryNumber() > 1? categoryNumber() + ' categories': '1 category'"></span>
+<!--				<span data-bind="text: self.filteredCategories > 1? self.filteredCategories + ' categories': '1 category'"></span> -->
+			</div>
+			<div class="select-result" data-bind="visible: !placeNumber()">No Result Found</div>
+
+			<div class="search-bar" data-bind="visible: searchFlag">
+				<input data-bind="value: keyword" class="search-area" placeholder="Search by name and category">
+				<button class="search-button"></button>
+			</div>
+
+			<div data-bind="visible: filterFlag">
+				<select data-bind="options: categories(),
+			                     optionsCaption: 'Choose category to filter',
+			                     value: selectedCategory"
+				        class="select">
+				</select>
+			</div>
+
+			<ul class="infolist" data-bind="foreach: filteredPlaces">
+				<li data-bind="click: $root.markerClick">
+					<hr>
+					<p><span class="v-name" data-bind="text: venue.name"></span></p>
+					<p class="v-category"><span data-bind="text: venue.categories[0].name"></span></p>
+					<p class="v-address"><span data-bind="text: venue.location.formattedAddress"></span></p>
+					<p class="v-contact"><span data-bind="text: venue.contact.formattedPhone"></span></p>
+					<p>
+						<strong>Tips: </strong>
+	              <span data-bind="if: $data.tips">
+	                <span data-bind="text: tips[0].text"></span>
+	              </span>
+	              <span data-bind="ifnot: $data.tips">
+	                <em>no tips available.</em>
+	              </span>
+					</p>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+	<script src="js/knockout-3.2.0.js"></script>
+	<script src="js/mymap.js"></script>
+	<script src="https://maps.googleapis.com/maps/api/js?libraries=places&callback=initMap"
+	        async defer onerror="mapError()"></script>
 </body>
 </html>
