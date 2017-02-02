@@ -183,7 +183,6 @@ body {
 	max-width: 300px;
 	width: 300px;
 	height: 55px;
-	margin: 0px 5px;
 	display: flex;
 	cursor: pointer;
 	-webkit-box-sizing: border-box;
@@ -316,13 +315,6 @@ p.v-contact {
 	width: 70px;
 }
 
-.no-result {
-	position: fixed;
-	top: 120px;
-	right: 110px;
-	color: #9E9E9E;
-}
-
 .arrow {
 	width: 36px;
 	height: 36px;
@@ -334,4 +326,5 @@ p.v-contact {
 	height: 20px;
 	display: flex;
 	width: inherit;
+	margin-top: 3px;
 }

@@ -20,7 +20,6 @@ function ViewModel() {
 	self.previousLocation = "";
 	self.location = ko.observable(defaultLocation); // user desired location
 	self.popularPlaces = ko.observableArray([]); // popular places arround the desired location
-	self.filteredPlaces = ko.observableArray(self.popularPlaces()); // filtered by user
 	self.keyword = ko.observable(''); // searched by user
 
 	self.infoListFlag = ko.observable(true); // boolean flag for info list toggle
@@ -35,59 +34,53 @@ function ViewModel() {
 	// Hold the selected value from drop down list of categories
 	self.selectedCategory = ko.observable('');
 
-	// Hold the categories of the places in the filteredPlaces
-	self.filteredCategories = ko.observableArray([]);
-
-	self.placeNumber = ko.observable(0);
-	self.categoryNumber = ko.observable(0);
-
 	// Set the map height to the window size
 	self.mapSize = ko.computed(function () {
 		$("#map").height($(window).height());
 	});
 
 	// The list of categories will be changed when the places are filtered
-	self.updateFilteredCategories = ko.computed(function () {
+	self.filteredCategories = ko.pureComputed(function () {
 		var categoryList = [], category;
-		self.filteredPlaces().forEach(function (place) {
-			category = place.venue.categories[0].name;
-			categoryList.push(category);
-		});
-		var categorySet = new Set(categoryList);
-		self.filteredCategories(Array.from(categorySet));
-		self.categoryNumber(self.filteredCategories().length);
-	});
-
-	self.updatePlaceNumber = ko.computed(function () {
-		self.placeNumber(self.filteredPlaces().length);
+		if (self.filteredPlaces()) {
+			self.filteredPlaces().forEach(function (place) {
+				category = place.venue.categories[0].name;
+				categoryList.push(category);
+			});
+			var categorySet = new Set(categoryList);
+			return Array.from(categorySet);
+		}
 	});
 
 	// Update the info list and the markers based on the selected category in the drop down list
 	// or the searching keyword
-	// self.updateFromSelectedCategory = ko.computed(function () {
 	self.filteredPlaces = ko.computed(function () {
-		// Only one of the two options of filter or search is allows
-		// filterFlag allows filter option
-		// if (!self.filterFlag())
-		// 	return;
+		// close the current infoWindow if opened
+		myApp.infoWindow.close();
 
+		var category = self.selectedCategory();
+		var keyword = self.keyword().toLowerCase();
+		if (self.filterFlag())
+			return filter(category);
+		else if (self.searchFlag()) {
+			return search(keyword);
+		}
+	});
+
+	function filter(category) {
 		var places;
-		if ((self.filterFlag() && !self.selectedCategory()) ||
-			  (self.searchFlag() && !keyword)) {
-
-			// No input found from the drop down menu or the keyword is empty, return all places
+		if (!category) {
+			// No input found from the drop down menu, return all places
 			places = self.popularPlaces();
 			places.forEach(function (place) {
 					showMarker(place.marker, true);
 			});
 
-		} else {
-			if (self.filterFlag()){ // filter by category, input found from the drop down menu
-
+		} else { // filter by category
 				// Clear the search bar
 				self.keyword("");
 				places = ko.utils.arrayFilter(self.popularPlaces(), function (place) {
-					if (self.filterFlag() && (place.venue.categories[0].name === self.selectedCategory())) {
+					if (place.venue.categories[0].name === category) {
 						showMarker(place.marker, true);
 						return true;
 					}
@@ -96,34 +89,43 @@ function ViewModel() {
 						return false;
 					}
 				});
-
-			} else { // search by name and category, the keyword is not empty
-				console.log("search---------");
-				console.log("keyword---------", keyword);
-				var keyword = self.keyword().toLowerCase();
-				places = ko.utils.arrayFilter(self.popularPlaces(), function (place) {
-					if (self.searchFlag() && (place.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
-						place.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1)) {
-						showMarker(place.marker, true);
-						return true;
-					}
-					else {
-						showMarker(place.marker, false);
-						return false;
-					}
-				});
-			}
 		}
-		// places(filterList);
-		// self.placeNumber(places().length);
-		// close the current infoWindow if opened
-		myApp.infoWindow.close();
-
-		// Move the desired location to the center of the map
-		if (self.locationMarker && self.locationMarker.position)
-			myApp.map.panTo(self.locationMarker.position);
-
 		return places;
+	};
+
+	function search(keyword) {
+		var places;
+		if (!keyword) {
+			// The keyword is empty, return all places
+			places = self.popularPlaces();
+			places.forEach(function (place) {
+					showMarker(place.marker, true);
+			});
+
+		} else { // search by name and category, the keyword is not empty
+			places = ko.utils.arrayFilter(self.popularPlaces(), function (place) {
+				if (place.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
+					place.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1) {
+					showMarker(place.marker, true);
+					return true;
+				}
+				else {
+					showMarker(place.marker, false);
+					return false;
+				}
+			});
+		}
+		return places;
+	};
+
+	self.placeNumber = ko.pureComputed(function () {
+		if (self.filteredPlaces())
+			return self.filteredPlaces().length;
+	});
+
+	self.categoryNumber = ko.pureComputed(function () {
+		if (self.filteredCategories())
+			return self.filteredCategories().length;
 	});
 
 	function showMarker(marker, show=true){
@@ -135,6 +137,7 @@ function ViewModel() {
 				marker.setMap(null);
 			}
 	}
+
 	// Use Google Maps PlacesService to get information for the desired location
 	self.neighborUpdate = ko.computed(function () {
 		// Only process when google map is loaded successfully
@@ -142,16 +145,14 @@ function ViewModel() {
 			return;
 
 		if ((self.previousLocation === "") || (self.location() !== self.previousLocation)) {
-		// if (self.location()) {
 
 			// Reset the drop down menu input and search input
 			self.selectedCategory("");
 			self.keyword("");
 
-			// if (self.location() !== self.previousLocation) {
 			self.previousLocation = self.location();
 
-			// Clear the previous values if exist
+			// Clear the previous values if exists
 			self.popularPlaces().forEach(function(place){
 				if (place.marker){
 					place.marker.setMap(null);
@@ -159,7 +160,6 @@ function ViewModel() {
 				}
 			});
 			self.popularPlaces([]);
-			// }
 
 			// Clear marker for the previous required location if exists
 			if (self.locationMarker) {
@@ -168,16 +168,13 @@ function ViewModel() {
 			}
 
 			var request = {query: self.location()};
-
 			myApp.service.textSearch(request, function neighborhoodCallback(results, status) {
-
 				if (status == google.maps.places.PlacesServiceStatus.OK) {
 					locationProcess(results[0]);
 					neighborProcess(results[0]);
 				} else {
 					alert("Please enter a valid place");
 				}
-
 			});
 		}
 	});
@@ -213,19 +210,18 @@ function ViewModel() {
 	self.markerClick = function (venue) {
 
 		var venueName = venue.venue.name.toLowerCase();
-
-		self.filteredPlaces().forEach(function (place) {
-			var marker = place.marker;
-
-			if (marker.title.toLowerCase() === venueName) {
-				google.maps.event.trigger(marker, 'click');
-				marker.setIcon(makeMarkerIcon(MARKER_ACTIVE_COLOR));
-				myApp.map.panTo(marker.position);
-			}
-
-			else // Deactivate all the rest of markers
-				marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
-		});
+		if (self.filteredPlaces()) {
+			self.filteredPlaces().forEach(function (place) {
+				var marker = place.marker;
+				if (marker.title.toLowerCase() === venueName) {
+					google.maps.event.trigger(marker, 'click');
+					marker.setIcon(makeMarkerIcon(MARKER_ACTIVE_COLOR));
+					myApp.map.panTo(marker.position);
+				}
+				else // Deactivate all the rest of markers
+					marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
+			});
+		}
 	};
 
   // Get/update the new desired location
@@ -261,7 +257,7 @@ function ViewModel() {
 
 		$.getJSON(foursquareQueryUri, function (data, status) {
 			if (status !== "success") {
-				alert("Something is wrong with FourSquare services now.");
+				alert("FourSquare services does not work at this time.");
 			}
 			if (data) {
 				self.popularPlaces(data.response.groups[0].items);
@@ -272,7 +268,7 @@ function ViewModel() {
 					place.marker = markerCreate(place.venue);
 
 					var category = place.venue.categories[0].name;
-					// dynamically retrieve categories to create dropdown list later
+					// Dynamically retrieve categories to create dropdown list later
 					categoryList.push(category);
 				});
 				var categorySet = new Set(categoryList);
@@ -440,76 +436,3 @@ function initMap() {
 function mapError() {
 	alert("Something is wrong with google map API now.");
 };
-
-
-	// // Update the info list and the markers based on the searching keyword
-	// self.updateFromSearchingKeyword = ko.computed(function () {
-	// 	// Only one of the two options of filter or search is allows
-	// 	// searchFlag allows search option
-	// 	if (!self.searchFlag())
-	// 		return;
-	//
-	// 	var keyword = self.keyword().toLowerCase();
-	// 	if (!keyword) {
-	// 		self.filteredPlaces(self.popularPlaces());
-	//
-	// 		self.filteredPlaces().forEach(function (place) {
-	//
-	// 			// Display marker for this place
-	// 			if (place.marker) {
-	// 				place.marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
-	// 				place.marker.setMap(myApp.map);
-	// 				// place.marker.setVisible(true);
-	// 			}
-	// 		});
-	// 	} else {
-	//
-	// 		self.filteredPlaces(ko.utils.arrayFilter(self.popularPlaces(), function (place) {
-	//
-	// 			if (place.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
-	// 				place.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1) {
-	//
-	// 				// Display marker for this place
-	// 				if (place.marker)
-	// 					place.marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
-	// 					place.marker.setMap(myApp.map);
-	// 					// place.marker.setVisible(true);
-	// 				return true;
-	// 			}
-	// 			else {
-	//
-	// 				// Hide marker for this place
-	// 				if (place.marker)
-	// 					place.marker.setMap(null);
-	// 					// place.marker.setVisible(false);
-	// 				return false;
-	// 			}
-	// 		}));
-	//
-	// 		// self.popularPlaces().forEach(function (place) {
-	// 		//
-	// 		// 	if (place.venue.name.toLowerCase().indexOf(keyword) !== -1 ||
-	// 		// 		place.venue.categories[0].name.toLowerCase().indexOf(keyword) !== -1) {
-	// 		// 		placeList.push(place);
-	// 		// 		categoryList.push(place.venue.categories[0].name);
-	// 		//
-	// 		// 		// Display marker for this place
-	// 		// 		if (place.marker)
-	// 		// 			place.marker.setVisible(true);
-	// 		// 	}
-	// 		// 	else {
-	// 		//
-	// 		// 		// Hide marker for this place
-	// 		// 		if (place.marker)
-	// 		// 			place.marker.setVisible(false);
-	// 		// 	}
-	// 		// });
-	// 		self.placeNumber(self.filteredPlaces().length);
-	// 		// Close the current infoWindow
-	// 		myApp.infoWindow.close();
-	//
-	// 		// Move the desired location to the center of the map
-	// 		if (self.locationMarker && self.locationMarker.position)
-	// 			myApp.map.panTo(self.locationMarker.position);
-	// 	}
-	// });
