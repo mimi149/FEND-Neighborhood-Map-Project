@@ -1,6 +1,6 @@
 body {
-	margin: 0px;
-	font-family: 'Roboto', sans-serif;
+	margin: 0;
+	font-family: "Roboto", sans-serif;
 }
 
 #map {
@@ -18,16 +18,16 @@ body {
 }
 
 .settings-icon {
-	background-color: #FF9800;
+	background-color: #ff9800;
 	border-radius: 100%;
 	width: 45px;
 	height: 44px;
 	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-	border: 0px;
-	padding: 0px;
+	border: 0;
+	padding: 0;
 	outline: 0;
 	margin-right: auto;
-	margin-left: 0px;
+	margin-left: 0;
 	display: block;
 	cursor: pointer;
 }
@@ -44,7 +44,7 @@ body {
 }
 
 .settings-icon:hover {
-	background-color: #F57C00;
+	background-color: #f57c00;
 }
 
 .pointy {
@@ -52,7 +52,7 @@ body {
 	height: 0;
 	border-left: 12px solid transparent;
 	border-right: 12px solid transparent;
-	border-top: 12px solid #FFFFFF;
+	border-top: 12px solid #fff;
 	margin-right: auto;
 	margin-left: 11px;
 	margin-bottom: 5px;
@@ -63,19 +63,19 @@ body {
 	max-width: 240px;
 	padding: 20px;
 	border-radius: 2px;
-	background-color: #FFFFFF;
+	background-color: #fff;
 }
 
 .settings-title {
-	margin: 0px;
+	margin: 0;
 	margin-bottom: 15px;
 	color: #535353;
 	cursor: default;
 }
 
 .settings-area {
-	margin: 0px;
-	padding: 0px;
+	margin: 0;
+	padding: 0;
 	padding-left: 10px;
 	width: 100%;
 	border: 2px solid transparent;
@@ -89,7 +89,7 @@ body {
 }
 
 .settings-area:hover {
-	border: 2px solid #FFCC80;
+	border: 2px solid #ffcc80;
 }
 
 .select-result {
@@ -109,11 +109,7 @@ body {
 	display: flex;
 	margin-left: auto;
 	margin-right: auto;
-	/*z-index: 101;*/
-	/*position: fixed;*/
-	/*margin-left: 20px;*/
-	/*top: 20px;*/
-	background-color: #FF9800;
+	background-color: #ff9800;
 }
 
 .search-filter {
@@ -123,10 +119,10 @@ body {
 }
 
 .search-area {
-	margin: 0px;
-	padding: 0px;
+	margin: 0;
+	padding: 0;
 	padding-left: 10px;
-	border: #FF9800;
+	border: #ff9800;
 	font-size: 15px;
 	line-height: 20px;
 	width: 100%;
@@ -140,25 +136,25 @@ body {
 
 .search-area:focus,
 .settings-area:focus {
-	border: 2px solid #FF9800;
+	border: 2px solid #ff9800;
 }
 
 .search-button {
-	background-color: #FF9800;
-	border: 2px solid #FF9800;
+	background-color: #ff9800;
+	border: 2px solid #ff9800;
 	width: 40px;
 	height: 25px;
-	border: 0px;
+	border: 0;
 	border-top-right-radius: 2px;
 	border-bottom-right-radius: 2px;
-	padding: 0px;
+	padding: 0;
 	outline: 0;
 	cursor: pointer;
 }
 
 .search-button:before {
 	background: url("../images/ic_search_white_24dp.png");
-	border: 2px solid #FF9800;
+	border: 2px solid #ff9800;
 	background-size: 17px;
 	display: block;
 	height: 17px;
@@ -169,8 +165,8 @@ body {
 }
 
 .search-button:hover {
-	background-color: #F57C00;
-	border: 2px solid #FF9800;
+	background-color: #f57c00;
+	border: 2px solid #ff9800;
 }
 
 .search-button:active,
@@ -179,7 +175,7 @@ body {
 
 .list-title {
 	color: #535353;
-	border-bottom: 1px solid #E6E6E6;
+	border-bottom: 1px solid #e6e6e6;
 	max-width: 300px;
 	width: 300px;
 	height: 55px;
@@ -191,7 +187,7 @@ body {
 }
 
 .list-title:hover {
-	background-color: #FAFAFA;
+	background-color: #fafafa;
 }
 
 .list-title:active {
@@ -219,7 +215,7 @@ body {
 	position: fixed;
 	top: 15px;
 	right: 15px;
-	background-color: #FFFFFF;
+	background-color: #fff;
 }
 
 .infolist {
@@ -239,13 +235,13 @@ body {
 }
 
 .infolist::-webkit-scrollbar-thumb {
-	background-color: #FFD180;
+	background-color: #ffd180;
 	min-height: 28px;
 	box-shadow: inset 1px 1px 0 rgba(0, 0, 0, .1), inset 0 -1px 0 rgba(0, 0, 0, .07);
 }
 
 .infolist::-webkit-scrollbar-thumb:hover {
-	background-color: #FFD180;
+	background-color: #ffd180;
 }
 
 hr {
@@ -259,25 +255,25 @@ hr {
 .infolist li {
 	padding: 15px;
 	padding-bottom: 25px;
-	padding-top: 0px;
+	padding-top: 0;
 	color: #535353;
 	cursor: pointer;
 }
 
 .infolist li:hover,
 .info-inactive {
-	background-color: #FFF3E0;
+	background-color: #fff3e0;
 }
 
 .infolist li:active,
 .info-active {
-	background-color: #FFD180;
+	background-color: #ffd180;
 }
 
 .infowindow p,
 .infolist p {
-	margin-top: 0px;
-	margin-bottom: 0px;
+	margin-top: 0;
+	margin-bottom: 0;
 }
 
 .v-name {
@@ -293,7 +289,7 @@ p.v-contact {
 }
 
 .v-link {
-	color: #4272DB;
+	color: #4272db;
 	text-decoration: none;
 }
 
@@ -303,7 +299,7 @@ p.v-contact {
 }
 
 .v-rating {
-	color: #FF9800;
+	color: #ff9800;
 	font-weight: bold;
 	margin-left: 10px;
 	margin-right: 5px;
@@ -318,7 +314,7 @@ p.v-contact {
 .arrow {
 	width: 36px;
 	height: 36px;
-	margin: 20px 0px;
+	margin: 20px 0;
 }
 
 .options-box {

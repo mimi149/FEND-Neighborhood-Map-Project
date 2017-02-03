@@ -19,7 +19,7 @@ function ViewModel() {
 
 	self.previousLocation = "";
 	self.location = ko.observable(defaultLocation); // user desired location
-	self.popularPlaces = ko.observableArray([]); // popular places arround the desired location
+	self.popularPlaces = ko.observableArray(); // popular places arround the desired location
 	self.keyword = ko.observable(''); // searched by user
 
 	self.infoListFlag = ko.observable(true); // boolean flag for info list toggle
@@ -29,7 +29,7 @@ function ViewModel() {
 	self.filterFlag = ko.observable(true); // boolean flag for filter option toggle
 
 	// Observable Array for drop down list of categories
-	self.categories = ko.observableArray([]);
+	self.categories = ko.observableArray();
 
 	// Hold the selected value from drop down list of categories
 	self.selectedCategory = ko.observable('');
@@ -73,22 +73,22 @@ function ViewModel() {
 			// No input found from the drop down menu, return all places
 			places = self.popularPlaces();
 			places.forEach(function (place) {
-					showMarker(place.marker, true);
+				showMarker(place.marker, true);
 			});
 
 		} else { // filter by category
-				// Clear the search bar
-				self.keyword("");
-				places = ko.utils.arrayFilter(self.popularPlaces(), function (place) {
-					if (place.venue.categories[0].name === category) {
-						showMarker(place.marker, true);
-						return true;
-					}
-					else {
-						showMarker(place.marker, false);
-						return false;
-					}
-				});
+			// Clear the search bar
+			self.keyword("");
+			places = ko.utils.arrayFilter(self.popularPlaces(), function (place) {
+				if (place.venue.categories[0].name === category) {
+					showMarker(place.marker, true);
+					return true;
+				}
+				else {
+					showMarker(place.marker, false);
+					return false;
+				}
+			});
 		}
 		return places;
 	};
@@ -99,7 +99,7 @@ function ViewModel() {
 			// The keyword is empty, return all places
 			places = self.popularPlaces();
 			places.forEach(function (place) {
-					showMarker(place.marker, true);
+				showMarker(place.marker, true);
 			});
 
 		} else { // search by name and category, the keyword is not empty
@@ -128,7 +128,7 @@ function ViewModel() {
 			return self.filteredCategories().length;
 	});
 
-	function showMarker(marker, show=true){
+	function showMarker(marker, show = true) {
 		if (marker)
 			if (show) {
 				marker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
@@ -153,8 +153,8 @@ function ViewModel() {
 			self.previousLocation = self.location();
 
 			// Clear the previous values if exists
-			self.popularPlaces().forEach(function(place){
-				if (place.marker){
+			self.popularPlaces().forEach(function (place) {
+				if (place.marker) {
 					place.marker.setMap(null);
 					place.marker = null;
 				}
@@ -224,7 +224,7 @@ function ViewModel() {
 		}
 	};
 
-  // Get/update the new desired location
+	// Get/update the new desired location
 	function locationProcess(location) {
 
 		var lat = location.geometry.location.lat();
@@ -300,6 +300,7 @@ function ViewModel() {
 		var marker = new google.maps.Marker({
 			map: myApp.map,
 			position: position,
+			animation: google.maps.Animation.DROP,
 			title: venue.name
 		});
 
@@ -330,6 +331,8 @@ function ViewModel() {
 				if (otherMarker.title !== markerTitle)
 					otherMarker.setIcon(makeMarkerIcon(MARKER_DEFAULT_COLOR));
 			});
+
+			this.setAnimation(4);
 
 			// Populate InfoWindow for this marker. We'll allow only one infoWindow to be opened when the marker
 			// is clicked and it'll appear on that markers position.
